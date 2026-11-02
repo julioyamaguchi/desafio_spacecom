@@ -1,0 +1,9 @@
+node_modules/
+dados/
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+
+*.log
+npm-debug.log*
