@@ -1,0 +1,15 @@
+{
+  "name": "desafio_spacecom",
+  "version": "1.0.0",
+  "description": "Detecção de encontros entre monitorados - Desafio Trainee Tech Spacecom 2027",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "ISC"
+}
