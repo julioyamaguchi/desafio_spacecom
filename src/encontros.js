@@ -3,6 +3,9 @@ import { calcularDistancia } from "./haversine.js";
 
 // Raio máximo (em metros) para configurar um encontro. A regra é estritamente menor.
 const LIMITE_ENCONTRO_METROS = 20;
+// Pré-filtro: 0,0002° de latitude ≈ 22 m (20 m + margem de segurança).
+// Se só a diferença norte-sul já passa disso, a distância real é ainda maior.
+const LIMITE_LATITUDE_GRAUS = 0.0002;
 
 /**
  * Verifica se "possivelAgressor" está na lista de restrição da "vitima".
@@ -95,6 +98,13 @@ export function detectarEncontros(lote) {
       const a = lote[i];
       const b = lote[j];
 
+      // Pré-filtro barato: se só a diferença de latitude já passa de 20 m, não é encontro.
+      // Evita seno, cosseno e raiz quadrada para a grande maioria dos pares.
+      const diferencaLat = a.latitude - b.latitude;
+      if (diferencaLat >= LIMITE_LATITUDE_GRAUS || diferencaLat <= -LIMITE_LATITUDE_GRAUS) {
+        continue;
+      }
+
       const distancia = calcularDistancia(
         a.latitude,
         a.longitude,
@@ -102,7 +112,7 @@ export function detectarEncontros(lote) {
         b.longitude,
       );
 
-      // Filtro principal: a grande maioria dos pares para aqui
+      // Filtro definitivo: a Haversine decide se é encontro (menor que 20 m)
       if (distancia >= LIMITE_ENCONTRO_METROS) {
         continue;
       }
