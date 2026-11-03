@@ -1,9 +1,18 @@
+# Dependências do Node
 node_modules/
-dados/
+
+# Datasets: ignora o conteúdo, mantém a pasta
+dados/*
+!dados/.gitkeep
+
+# Arquivos do sistema operacional
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Configurações do editor
 .vscode/
 
+# Logs
 *.log
 npm-debug.log*
