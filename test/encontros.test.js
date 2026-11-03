@@ -1,7 +1,6 @@
-// test/encontros.test.js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classificarEncontro } from "../src/encontros.js";
+import { classificarEncontro, detectarEncontros } from "../src/encontros.js";
 
 /**
  * Cria um monitorado com valores padrão.
@@ -102,4 +101,115 @@ test("vítima encontrando quem não é seu agressor é generico", () => {
 
   // Assert
   assert.equal(tipo, "generico");
+});
+
+// ---------- detectarEncontros ----------
+
+test("detecta o encontro protetivo 9 x 10 exatamente como no respostas1", () => {
+  // Arrange: posições reais do timestamp 00:16:45 do dataset1
+  const lote = [
+    criarMonitorado({
+      idMonitorado: 9,
+      timestamp: "2024-01-01 00:16:45",
+      latitude: 1.83355,
+      longitude: -69.5461,
+      medidaProtetiva: true,
+      idsRestricaoMedida: [10],
+    }),
+    criarMonitorado({
+      idMonitorado: 10,
+      timestamp: "2024-01-01 00:16:45",
+      latitude: 1.83351,
+      longitude: -69.54618,
+    }),
+  ];
+  const esperado = [
+    {
+      tipo: "protetiva",
+      monitoradosEncontro: [9, 10],
+      timestamp: "2024-01-01 00:16:45",
+      posicoes: {
+        9: { lat: 1.83355, lon: -69.5461 },
+        10: { lat: 1.83351, lon: -69.54618 },
+      },
+      distanciaMetros: 9.941503149375345,
+    },
+  ];
+
+  // Act
+  const obtido = detectarEncontros(lote);
+
+  // Assert
+  assert.deepEqual(obtido, esperado);
+});
+
+test("não detecta encontro entre monitorados distantes", () => {
+  // Arrange: um em Curitiba, outro a ~1 km de distância
+  const lote = [
+    criarMonitorado({
+      idMonitorado: 1,
+      latitude: -25.4284,
+      longitude: -49.2733,
+    }),
+    criarMonitorado({
+      idMonitorado: 2,
+      latitude: -25.4374,
+      longitude: -49.2733,
+    }),
+  ];
+
+  // Act
+  const obtido = detectarEncontros(lote);
+
+  // Assert - array vazio é a reposta correta quando nao há encontro
+  assert.deepEqual(obtido, []);
+});
+
+test("coloca o menor ID primeiro mesmo quando o maior vem antes no lote", () => {
+  // Arrange: o 10 aparece antes do 9
+  const lote = [
+    criarMonitorado({
+      idMonitorado: 10,
+      latitude: 1.83351,
+      longitude: -69.54618,
+    }),
+    criarMonitorado({
+      idMonitorado: 9,
+      latitude: 1.83355,
+      longitude: -69.5461,
+    }),
+  ];
+
+  // Act
+  const obtido = detectarEncontros(lote);
+
+  // Assert
+  assert.deepEqual(obtido[0].monitoradosEncontro, [9, 10]);
+});
+
+test("registra cada par uma única vez em um lote com três monitorados próximos", () => {
+  // Arrange: três pessoas no mesmo ponto formam 3 pares: (1,2), (1,3), (2,3)
+  const lote = [
+    criarMonitorado({
+      idMonitorado: 1,
+      latitude: -25.4284,
+      longitude: -49.2733,
+    }),
+    criarMonitorado({
+      idMonitorado: 2,
+      latitude: -25.4284,
+      longitude: -49.2733,
+    }),
+    criarMonitorado({
+      idMonitorado: 3,
+      latitude: -25.4284,
+      longitude: -49.2733,
+    }),
+  ];
+
+  // Act
+  const obtido = detectarEncontros(lote);
+
+  // Assert: 3 encontros, e não 6 (sem repetir o par invertido)
+  assert.equal(obtido.length, 3);
 });
