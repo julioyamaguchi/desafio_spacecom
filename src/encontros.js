@@ -85,12 +85,27 @@ function montarEncontro(a, b, tipo, distancia) {
 }
 
 /**
+ * Devolve o próprio monitorado. É o comportamento padrão do detectarEncontros,
+ * usado quando o lote já tem os monitorados completos (como nos testes).
+ * @param {Object} monitorado
+ * @returns {Object}
+ */
+function semCompletar(monitorado) {
+  return monitorado;
+}
+
+/**
  * Detecta todos os encontros dentro de um lote de monitorados do MESMO timestamp.
  * Compara cada par uma única vez (j começa em i + 1).
- * @param {Object[]} lote - monitorados de um mesmo timestamp
+ *
+ * Os itens do lote só precisam ter latitude e longitude. Os dados completos
+ * (ID, facção, medida protetiva...) só são necessários para os pares que viram
+ * encontro: por isso a função "completar" é chamada apenas nesses casos.
+ * @param {Object[]} lote - itens de um mesmo timestamp, com latitude e longitude
+ * @param {function(Object): Object} [completar] - transforma um item no monitorado completo
  * @returns {Object[]} encontros no formato de saída
  */
-export function detectarEncontros(lote) {
+export function detectarEncontros(lote, completar = semCompletar) {
   const encontros = [];
 
   for (let i = 0; i < lote.length; i++) {
@@ -101,7 +116,10 @@ export function detectarEncontros(lote) {
       // Pré-filtro barato: se só a diferença de latitude já passa de 20 m, não é encontro.
       // Evita seno, cosseno e raiz quadrada para a grande maioria dos pares.
       const diferencaLat = a.latitude - b.latitude;
-      if (diferencaLat >= LIMITE_LATITUDE_GRAUS || diferencaLat <= -LIMITE_LATITUDE_GRAUS) {
+      if (
+        diferencaLat >= LIMITE_LATITUDE_GRAUS ||
+        diferencaLat <= -LIMITE_LATITUDE_GRAUS
+      ) {
         continue;
       }
 
@@ -117,8 +135,11 @@ export function detectarEncontros(lote) {
         continue;
       }
 
-      const tipo = classificarEncontro(a, b);
-      encontros.push(montarEncontro(a, b, tipo, distancia));
+      // Só agora os dados completos são necessários (raro: dezenas de vezes por arquivo)
+      const monitoradoA = completar(a);
+      const monitoradoB = completar(b);
+      const tipo = classificarEncontro(monitoradoA, monitoradoB);
+      encontros.push(montarEncontro(monitoradoA, monitoradoB, tipo, distancia));
     }
   }
 
