@@ -5,9 +5,7 @@ node_modules/
 dados/*
 !dados/.gitkeep
 
-# Saídas geradas: ignora o conteúdo, mantém a pasta
-saida/*
-!saida/.gitkeep
+
 
 # Arquivos do sistema operacional
 Thumbs.db
